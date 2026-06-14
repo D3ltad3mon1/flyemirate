@@ -77,14 +77,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "EMIRATES" },
+      { name: "description", content: "FLY EMIRATES" },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "EMIRATES" },
+      { property: "og:description", content: "FLY EMIRATES" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "EMIRATES" },
+      { name: "twitter:description", content: "FLY EMIRATES" },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/5056c40d-3bc0-48b4-91d0-f451cad7bb8b/id-preview-9eb1effb--b8e3db6c-f84a-4af1-9be8-ec72a4dae25f.lovable.app-1781468251058.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/5056c40d-3bc0-48b4-91d0-f451cad7bb8b/id-preview-9eb1effb--b8e3db6c-f84a-4af1-9be8-ec72a4dae25f.lovable.app-1781468251058.png" },
     ],
     links: [
       {
