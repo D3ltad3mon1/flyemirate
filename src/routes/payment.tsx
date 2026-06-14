@@ -54,7 +54,7 @@ function PaymentPage() {
         customer_name: lead ? `${lead.firstName} ${lead.lastName}` : null,
         customer_email: draft.contactEmail ?? null,
         payment_method: methodName,
-        booking_details: {
+        booking_details: JSON.parse(JSON.stringify({
           flights: draft.selectedFlights.map((f) => ({
             no: f.flightNumber, from: f.from, to: f.to, depart: f.depart, arrive: f.arrive, price: f.price,
           })),
@@ -62,7 +62,7 @@ function PaymentPage() {
           contactPhone: draft.contactPhone,
           cabin: draft.criteria.cabin,
           totalPrice: draft.totalPrice,
-        },
+        })),
       })
       .select("id")
       .single();
