@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRightLeft, Calendar, Plus, Trash2, Users } from "lucide-react";
 import heroImage from "@/assets/hero-plane.jpg";
 import { SiteHeader } from "@/components/site-header";
@@ -27,7 +27,7 @@ function Home() {
   const navigate = useNavigate();
   const [tripType, setTripType] = useState<TripType>("return");
   const [legs, setLegs] = useState<Leg[]>([
-    { from: "LOS", to: "DXB", date: todayPlus(14) },
+    { from: "", to: "", date: todayPlus(14) },
   ]);
   const [returnDate, setReturnDate] = useState(todayPlus(21));
   const [adults, setAdults] = useState(1);
@@ -225,19 +225,89 @@ function Label({ children }: { children: React.ReactNode }) {
 }
 
 function AirportSelect({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  const selected = AIRPORTS.find((a) => a.code === value);
+  const [query, setQuery] = useState(selected ? `${selected.city} (${selected.code})` : "");
+  const [open, setOpen] = useState(false);
+  const [highlight, setHighlight] = useState(0);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const s = AIRPORTS.find((a) => a.code === value);
+    setQuery(s ? `${s.city} (${s.code})` : "");
+  }, [value]);
+
+  useEffect(() => {
+    const onDocClick = (e: MouseEvent) => {
+      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, []);
+
+  const results = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const list = !q
+      ? AIRPORTS
+      : AIRPORTS.filter((a) =>
+          a.city.toLowerCase().includes(q) ||
+          a.country.toLowerCase().includes(q) ||
+          a.code.toLowerCase().includes(q) ||
+          (a.name?.toLowerCase().includes(q) ?? false)
+        );
+    return list.slice(0, 80);
+  }, [query]);
+
+  const pick = (code: string) => {
+    onChange(code);
+    const a = AIRPORTS.find((x) => x.code === code)!;
+    setQuery(`${a.city} (${a.code})`);
+    setOpen(false);
+  };
+
   return (
-    <div>
+    <div ref={wrapRef} className="relative">
       <Label>{label}</Label>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
+      <input
+        type="text"
+        value={query}
+        placeholder="Select airport"
+        onFocus={() => { setOpen(true); setHighlight(0); }}
+        onChange={(e) => { setQuery(e.target.value); setOpen(true); setHighlight(0); if (!e.target.value) onChange(""); }}
+        onKeyDown={(e) => {
+          if (e.key === "ArrowDown") { e.preventDefault(); setOpen(true); setHighlight((h) => Math.min(h + 1, results.length - 1)); }
+          else if (e.key === "ArrowUp") { e.preventDefault(); setHighlight((h) => Math.max(h - 1, 0)); }
+          else if (e.key === "Enter" && open && results[highlight]) { e.preventDefault(); pick(results[highlight].code); }
+          else if (e.key === "Escape") setOpen(false);
+        }}
         className="h-11 w-full rounded-md border bg-background px-3 text-sm"
-      >
-        <option value="">Select airport</option>
-        {AIRPORTS.map((a) => (
-          <option key={a.code} value={a.code}>{a.city} ({a.code}) — {a.country}</option>
-        ))}
-      </select>
+        autoComplete="off"
+      />
+      {open && results.length > 0 && (
+        <ul className="absolute z-30 mt-1 max-h-72 w-full overflow-auto rounded-md border bg-popover shadow-lg">
+          {results.map((a, idx) => (
+            <li
+              key={a.code}
+              onMouseDown={(e) => { e.preventDefault(); pick(a.code); }}
+              onMouseEnter={() => setHighlight(idx)}
+              className={`cursor-pointer px-3 py-2 text-sm ${idx === highlight ? "bg-muted" : ""}`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="truncate">
+                  <span className="font-medium">{a.city}</span>
+                  <span className="text-muted-foreground"> — {a.country}</span>
+                  {a.name && <span className="text-muted-foreground"> · {a.name}</span>}
+                </span>
+                <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-xs font-semibold">{a.code}</span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+      {open && results.length === 0 && (
+        <div className="absolute z-30 mt-1 w-full rounded-md border bg-popover p-3 text-sm text-muted-foreground shadow-lg">
+          No airports match "{query}"
+        </div>
+      )}
     </div>
   );
 }
