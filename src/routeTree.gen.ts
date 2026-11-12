@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminPortalX7k9RouteImport } from './routes/admin-portal-x7k9'
+import { Route as AdminSigninRouteImport } from './routes/admin-signin'
 import { Route as PassengersRouteImport } from './routes/passengers'
 import { Route as PaymentRouteImport } from './routes/payment'
 import { Route as SearchRouteImport } from './routes/search'
@@ -23,6 +24,11 @@ const IndexRoute = IndexRouteImport.update({
 const AdminPortalX7k9Route = AdminPortalX7k9RouteImport.update({
   id: '/admin-portal-x7k9',
   path: '/admin-portal-x7k9',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminSigninRoute = AdminSigninRouteImport.update({
+  id: '/admin-signin',
+  path: '/admin-signin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PassengersRoute = PassengersRouteImport.update({
@@ -44,6 +50,7 @@ const SearchRoute = SearchRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin-portal-x7k9': typeof AdminPortalX7k9Route
+  '/admin-signin': typeof AdminSigninRoute
   '/passengers': typeof PassengersRoute
   '/payment': typeof PaymentRoute
   '/search': typeof SearchRoute
@@ -51,6 +58,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin-portal-x7k9': typeof AdminPortalX7k9Route
+  '/admin-signin': typeof AdminSigninRoute
   '/passengers': typeof PassengersRoute
   '/payment': typeof PaymentRoute
   '/search': typeof SearchRoute
@@ -59,19 +67,33 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin-portal-x7k9': typeof AdminPortalX7k9Route
+  '/admin-signin': typeof AdminSigninRoute
   '/passengers': typeof PassengersRoute
   '/payment': typeof PaymentRoute
   '/search': typeof SearchRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin-portal-x7k9' | '/passengers' | '/payment' | '/search'
+  fullPaths:
+    | '/'
+    | '/admin-portal-x7k9'
+    | '/admin-signin'
+    | '/passengers'
+    | '/payment'
+    | '/search'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin-portal-x7k9' | '/passengers' | '/payment' | '/search'
+  to:
+    | '/'
+    | '/admin-portal-x7k9'
+    | '/admin-signin'
+    | '/passengers'
+    | '/payment'
+    | '/search'
   id:
     | '__root__'
     | '/'
     | '/admin-portal-x7k9'
+    | '/admin-signin'
     | '/passengers'
     | '/payment'
     | '/search'
@@ -80,6 +102,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminPortalX7k9Route: typeof AdminPortalX7k9Route
+  AdminSigninRoute: typeof AdminSigninRoute
   PassengersRoute: typeof PassengersRoute
   PaymentRoute: typeof PaymentRoute
   SearchRoute: typeof SearchRoute
@@ -99,6 +122,13 @@ declare module '@tanstack/react-router' {
       path: '/admin-portal-x7k9'
       fullPath: '/admin-portal-x7k9'
       preLoaderRoute: typeof AdminPortalX7k9RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-signin': {
+      id: '/admin-signin'
+      path: '/admin-signin'
+      fullPath: '/admin-signin'
+      preLoaderRoute: typeof AdminSigninRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/passengers': {
@@ -128,6 +158,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminPortalX7k9Route: AdminPortalX7k9Route,
+  AdminSigninRoute: AdminSigninRoute,
   PassengersRoute: PassengersRoute,
   PaymentRoute: PaymentRoute,
   SearchRoute: SearchRoute,

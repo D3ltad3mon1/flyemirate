@@ -5,7 +5,11 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { ChatWidget } from "@/components/chat-widget";
 import { loadDraft, type BookingDraft } from "@/lib/booking";
-import { supabase } from "@/integrations/supabase/client";
+import {
+  createChatConversation,
+  loadChatSession,
+  saveChatSession,
+} from "@/lib/chat";
 
 export const Route = createFileRoute("/payment")({
   head: () => ({ meta: [{ title: "Payment | Emirates" }] }),
@@ -26,6 +30,8 @@ function PaymentPage() {
   const [draft, setDraft] = useState<BookingDraft | null>(null);
   const [method, setMethod] = useState<MethodId | null>(null);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [greeting, setGreeting] = useState<string | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -33,6 +39,15 @@ function PaymentPage() {
     const d = loadDraft();
     if (!d || !d.passengers?.length) { navigate({ to: "/" }); return; }
     setDraft(d);
+    // A chat started earlier in this browser keeps working after a reload.
+    const saved = loadChatSession();
+    if (saved) {
+      setConversationId(saved.conversationId);
+      setAccessToken(saved.accessToken);
+      setGreeting(saved.greeting || null);
+      const m = METHODS.find((x) => x.name === saved.paymentMethod);
+      if (m) setMethod(m.id);
+    }
   }, [navigate]);
 
   if (!draft) return null;
@@ -43,18 +58,21 @@ function PaymentPage() {
     const lead = draft.passengers?.[0];
     const methodName = METHODS.find((x) => x.id === m)!.name;
 
-    // Greeting message from "admin"
-    const greeting = `Hello${lead?.firstName ? " " + lead.firstName : ""}! Thanks for choosing ${methodName}. ` +
+    // Welcome line from the agent — shown locally in the chat, never written
+    // to the database (customers cannot insert "admin" messages).
+    const welcome =
+      `Hello${lead?.firstName ? " " + lead.firstName : ""}! Thanks for choosing ${methodName}. ` +
       `Your booking total is US$ ${draft.totalPrice.toLocaleString()}. ` +
       `An Emirates payment specialist will be with you in a moment to share the payment details.`;
 
-    const { data, error } = await supabase
-      .from("conversations")
-      .insert({
-        customer_name: lead ? `${lead.firstName} ${lead.lastName}` : null,
-        customer_email: draft.contactEmail ?? null,
-        payment_method: methodName,
-        booking_details: JSON.parse(JSON.stringify({
+    try {
+      // The chat is created through the token-gated function, never by
+      // writing to the conversations table directly.
+      const { id, accessToken: token } = await createChatConversation({
+        customerName: lead ? `${lead.firstName} ${lead.lastName}` : null,
+        customerEmail: draft.contactEmail ?? null,
+        paymentMethod: methodName,
+        bookingDetails: JSON.parse(JSON.stringify({
           flights: draft.selectedFlights.map((f) => ({
             no: f.flightNumber, from: f.from, to: f.to, depart: f.depart, arrive: f.arrive, price: f.price,
           })),
@@ -63,16 +81,17 @@ function PaymentPage() {
           cabin: draft.criteria.cabin,
           totalPrice: draft.totalPrice,
         })),
-      })
-      .select("id")
-      .single();
-    setLoading(false);
-    if (error || !data) { alert("Could not start chat. Please try again."); return; }
-    setConversationId(data.id);
-    await supabase.from("messages").insert({
-      conversation_id: data.id, sender: "admin", content: greeting,
-    });
-    setChatOpen(true);
+      });
+      saveChatSession({ conversationId: id, accessToken: token, paymentMethod: methodName, greeting: welcome });
+      setConversationId(id);
+      setAccessToken(token);
+      setGreeting(welcome);
+      setChatOpen(true);
+    } catch {
+      alert("Could not start chat. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -141,6 +160,8 @@ function PaymentPage() {
 
       <ChatWidget
         conversationId={conversationId}
+        accessToken={accessToken}
+        greeting={greeting}
         open={chatOpen}
         onClose={() => setChatOpen(false)}
         paymentMethod={METHODS.find((m) => m.id === method)?.name ?? ""}

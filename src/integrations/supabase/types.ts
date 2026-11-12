@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       conversations: {
         Row: {
+          access_token: string
           booking_details: Json | null
           created_at: string
           customer_email: string | null
@@ -26,6 +27,7 @@ export type Database = {
           status: string
         }
         Insert: {
+          access_token?: string
           booking_details?: Json | null
           created_at?: string
           customer_email?: string | null
@@ -36,6 +38,7 @@ export type Database = {
           status?: string
         }
         Update: {
+          access_token?: string
           booking_details?: Json | null
           created_at?: string
           customer_email?: string | null
@@ -84,7 +87,29 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_conversation: {
+        Args: {
+          p_booking_details: Json
+          p_customer_email: string | null
+          p_customer_name: string | null
+          p_payment_method: string
+        }
+        Returns: { access_token: string; id: string }[]
+      }
+      get_conversation_messages: {
+        Args: { p_conversation_id: string; p_token: string }
+        Returns: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          sender: string
+        }[]
+      }
+      send_customer_message: {
+        Args: { p_content: string; p_conversation_id: string; p_token: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
